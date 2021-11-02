@@ -79,11 +79,40 @@ namespace server {
         _ins = new buffer_pool();
         assert(_ins);
       }
+      /**
+       * @brief 创建并返回缓存池实例
+       * @return 缓存池实例
+       */
+      static buffer_pool* ins()
+      {
+        pthread_once(&_once, init);
+        return _ins;
+      }
+      /**
+       * @brief 根据N分配内存
+       * @param N 分配内存大小量
+       * @return 分配好的io缓存指针
+       */
+      io_buffer* alloc(int N);
+
+      /**
+       * @brief 无参申请函数，默认申请4kb内存
+       * @return 分配好内存的io缓存指针
+       */
+      io_buffer* alloc() { return alloc(u4K); }
+
+      void revert(io_buffer* buffer);
+
 
     private:
       buffer_pool();
       buffer_pool(const buffer_pool &);
+      int mem_size_ceil(int);
       const buffer_pool &operator=(const buffer_pool &);
+
+      typedef std::unordered_map<int,io_buffer*> pool_t;
+      pool_t _pool;
+      uint64_t _total_mem;
       static buffer_pool *_ins;
       static pthread_mutex_t _mutex;
       static pthread_once_t _once;
